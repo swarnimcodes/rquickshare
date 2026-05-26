@@ -2,6 +2,7 @@
 import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { OutboundPayload } from '@martichou/core_lib/bindings/OutboundPayload';
 import { TauriVM } from '../vue_lib/helper/ParamsHelper';
+import { useToastStore, ToastType } from '../vue_lib';
 import { PropType } from 'vue';
 
 const props = defineProps({
@@ -12,6 +13,7 @@ const props = defineProps({
 });
 
 const emits = defineEmits(['outboundPayload', 'discoveryRunning']);
+const toastStore = useToastStore();
 
 function openFilePicker() {
 	props.vm.dialogOpen({
@@ -43,8 +45,17 @@ function openFilePicker() {
 }
 
 async function shareClipboard() {
-	const text = await readText();
-	if (!text) return;
+	let text: string | null = null;
+	try {
+		text = await readText();
+	} catch {
+		toastStore.addToast("Clipboard is empty", ToastType.Error);
+		return;
+	}
+	if (!text) {
+		toastStore.addToast("Clipboard is empty", ToastType.Error);
+		return;
+	}
 	emits('outboundPayload', { Text: text } as OutboundPayload);
 	if (!props.vm.discoveryRunning) await props.vm.invoke('start_discovery');
 	emits('discoveryRunning');
