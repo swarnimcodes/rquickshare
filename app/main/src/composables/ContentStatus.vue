@@ -49,7 +49,15 @@ async function shareClipboard() {
 	try {
 		text = await readText();
 	} catch {
-		toastStore.addToast("Clipboard is empty", ToastType.Error);
+		// No text — try image clipboard
+		try {
+			const tempPath = await props.vm.invoke<string>('save_clipboard_image');
+			emits('outboundPayload', { Files: [tempPath] } as OutboundPayload);
+			if (!props.vm.discoveryRunning) await props.vm.invoke('start_discovery');
+			emits('discoveryRunning');
+		} catch {
+			toastStore.addToast("Clipboard is empty", ToastType.Error);
+		}
 		return;
 	}
 	if (!text) {
