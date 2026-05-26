@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { readText } from '@tauri-apps/plugin-clipboard-manager';
 import { OutboundPayload } from '@martichou/core_lib/bindings/OutboundPayload';
 import { TauriVM } from '../vue_lib/helper/ParamsHelper';
 import { PropType } from 'vue';
@@ -40,6 +41,14 @@ function openFilePicker() {
 		emits('discoveryRunning');
 	})
 }
+
+async function shareClipboard() {
+	const text = await readText();
+	if (!text) return;
+	emits('outboundPayload', { Text: text } as OutboundPayload);
+	if (!props.vm.discoveryRunning) await props.vm.invoke('start_discovery');
+	emits('discoveryRunning');
+}
 </script>
 
 <template>
@@ -67,11 +76,19 @@ function openFilePicker() {
 		<h4 class="mt-2 font-medium">
 			Drop files to send
 		</h4>
-		<div class="btn mt-2 active:scale-95 transition duration-150 ease-in-out" @click="openFilePicker()">
-			<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
-				<path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
-			</svg>
-			<span class="ml-2">Select</span>
+		<div class="flex gap-2 mt-2">
+			<div class="btn active:scale-95 transition duration-150 ease-in-out" @click="openFilePicker()">
+				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+					<path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+				</svg>
+				<span class="ml-2">Select</span>
+			</div>
+			<div class="btn active:scale-95 transition duration-150 ease-in-out" @click="shareClipboard()">
+				<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+					<path d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z"/>
+				</svg>
+				<span class="ml-2">Clipboard</span>
+			</div>
 		</div>
 	</div>
 </template>
